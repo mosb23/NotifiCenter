@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const { jwtSecret } = require('../config/config');
 
 const jwtBarrier = (req, res, next) => {
   const authHeader = req.headers['authorization'];
@@ -8,12 +9,17 @@ const jwtBarrier = (req, res, next) => {
     return res.status(401).json({ message: 'Access denied. No token provided.' });
   }
 
-  jwt.verify(token, 'yourSecretKey', (err, decoded) => {
+  jwt.verify(token, jwtSecret, (err, decoded) => {
     if (err) {
-      return res.status(403).json({ message: 'Invalid token.' });
+      const message =
+        err.name === 'TokenExpiredError'
+          ? 'Token expired. Please login again.'
+          : 'Invalid token.';
+
+      return res.status(403).json({ message, error: err.message });
     }
 
-    req.user = decoded; // store payload info in req.user
+    req.user = decoded;
     next();
   });
 };

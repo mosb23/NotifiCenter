@@ -40,7 +40,7 @@ async function importExcel(filePath) {
   console.log('Import finished!');
 }
 
-const filePath = "C:\\Users\\mosb2\\OneDrive\\Desktop\\test_users.xlsx";    //excel file path 
+const filePath = "C:\\Users\\mosb2\\OneDrive\\Desktop\\test_users_100k.xlsx";    //file path
 importExcel(filePath)
   .then(() => console.log("Import complete!"))
   .catch((err) => console.error("Import failed:", err));

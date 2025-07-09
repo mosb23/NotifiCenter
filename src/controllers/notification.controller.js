@@ -56,16 +56,22 @@ const uploadNotification = async (req, res) => {
 
 const getAllNotifications = async (req, res) => {
   try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ message: 'Unauthorized: No user ID' });
+    }
+
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
     const [notifications, total] = await Promise.all([
-      Notification.find({ createdBy: req.user.id })
+      Notification.find({ createdBy: userId })
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit),
-      Notification.countDocuments({ createdBy: req.user.id })
+      Notification.countDocuments({ createdBy: userId })
     ]);
 
     res.json({
@@ -79,6 +85,7 @@ const getAllNotifications = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
+
 
 const getNotificationById = async (req, res) => {
   try {

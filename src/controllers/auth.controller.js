@@ -7,7 +7,6 @@ const { registerSchema } = require('../validators/user.validator');
 
 exports.register = async (req, res) => {
   const { username, password } = req.body;
-
   try {
     // ✅ Validate input
     const { error } = registerSchema.validate({ username, password });
@@ -34,7 +33,6 @@ exports.register = async (req, res) => {
 
 exports.login = async (req, res) => {
   const { username, password } = req.body;
-
   try {
     const user = await User.findOne({ username });
     if (!user) {
@@ -49,7 +47,7 @@ exports.login = async (req, res) => {
     const token = jwt.sign(
       { id: user._id, username: user.username },
       config.jwtSecret,
-      { expiresIn: '1h' }
+      { expiresIn:config.jwtExpiresIn }
     );
 
     res.json({ token });

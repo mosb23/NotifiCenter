@@ -4,7 +4,7 @@ const cifSchema = new mongoose.Schema({
   value: {
     type: String,
     required: true,
-    match: /^\d{8}$/
+    match: /^\d{8}$/ 
   }
 });
 

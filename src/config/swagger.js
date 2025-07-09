@@ -1,33 +1,35 @@
 const swaggerJSDoc = require('swagger-jsdoc');
 
-const swaggerDefinition = {
-  openapi: '3.0.0',
-  info: {
-    title: 'JWT Auth API',
-    version: '1.0.0',
-    description: 'API documentation for your JWT authentication system',
-  },
-  servers: [
-    {
-      url: 'http://localhost:3000/api',
-      description: 'Development server',
+const options = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'NotifiCenter API',
+      version: '1.0.0',
+      description: 'API documentation for your JWT authentication and notification system',
     },
-  ],
-  components: {
-    securitySchemes: {
-      bearerAuth: {
-        type: 'http',
-        scheme: 'bearer',
-        bearerFormat: 'JWT',
+    servers: [
+      {
+        url: 'http://localhost:3000/api',
+        description: 'Development server',
+      },
+    ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        },
       },
     },
+    security: [
+      {
+        bearerAuth: [],
+      },
+    ],
   },
-  security: [{ bearerAuth: [] }],
-};
-
-const options = {
-  swaggerDefinition,
-  apis: ['./src/routes/*.js'], // location of your route files
+  apis: ['./src/routes/*.js'], // Adjust this path if needed
 };
 
 const swaggerSpec = swaggerJSDoc(options);

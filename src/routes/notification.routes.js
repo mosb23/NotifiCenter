@@ -3,14 +3,32 @@ const router = express.Router();
 const upload = require('../config/multer');
 const jwtBarrier = require('../middleware/auth.middleware').verifyToken;
 const notificationController = require('../controllers/notification.controller');
-const authController = require('../controllers/auth.controller');
 const validate = require('../middleware/validate.middleware');
 const { notificationSchema, updateSchema } = require('../validators/notification.validator');
 
 
+
+router.post(
+  '/notifications/upload',
+  jwtBarrier,
+  upload.single('file'),
+  validate(notificationSchema),
+  notificationController.uploadNotification
+);
+
+router.get('/notifications', jwtBarrier, notificationController.getAllNotifications);
+router.get('/notifications/:id', jwtBarrier, notificationController.getNotificationById);
+router.put('/notifications/:id', jwtBarrier, validate(updateSchema), notificationController.updateNotification);
+router.delete('/notifications/:id', jwtBarrier, notificationController.deleteNotification);
+
+module.exports = router;
+
+
+
+
 /**
  * @swagger
- * /api/notifications/upload:
+ * /notifications/upload:
  *   post:
  *     summary: Upload an Excel file with CIFs and create a notification
  *     tags: [Notifications]
@@ -65,17 +83,11 @@ const { notificationSchema, updateSchema } = require('../validators/notification
  *       500:
  *         description: Server error
  */
-router.post(
-  '/notifications/upload',
-  jwtBarrier,
-  upload.single('file'),
-  validate(notificationSchema),
-  notificationController.uploadNotification
-);
+
 
 /**
  * @swagger
- * /api/notifications:
+ * /notifications:
  *   get:
  *     summary: Get all notifications for the logged-in user (paginated)
  *     tags: [Notifications]
@@ -86,23 +98,23 @@ router.post(
  *         name: page
  *         schema:
  *           type: integer
- *         description: Page number (default: 1)
+ *         description: "Page number (default: 1)"
  *       - in: query
  *         name: limit
  *         schema:
  *           type: integer
- *         description: Items per page (default: 10)
+ *         description: "Items per page (default: 10)"
  *     responses:
  *       200:
  *         description: Paginated list of notifications
  *       401:
  *         description: Unauthorized
  */
-router.get('/notifications', jwtBarrier, notificationController.getAllNotifications);
+
 
 /**
  * @swagger
- * /api/notifications/{id}:
+ * /notifications/{id}:
  *   get:
  *     summary: Get a specific notification by ID
  *     tags: [Notifications]
@@ -121,11 +133,12 @@ router.get('/notifications', jwtBarrier, notificationController.getAllNotificati
  *       404:
  *         description: Notification not found
  */
-router.get('/notifications/:id', jwtBarrier, notificationController.getNotificationById);
+
+
 
 /**
  * @swagger
- * /api/notifications/{id}:
+ * /notifications/{id}:
  *   put:
  *     summary: Update a notification by ID
  *     tags: [Notifications]
@@ -164,11 +177,12 @@ router.get('/notifications/:id', jwtBarrier, notificationController.getNotificat
  *       404:
  *         description: Notification not found
  */
-router.put('/notifications/:id', jwtBarrier, validate(updateSchema), notificationController.updateNotification);
+
+
 
 /**
  * @swagger
- * /api/notifications/{id}:
+ * /notifications/{id}:
  *   delete:
  *     summary: Delete a notification by ID
  *     tags: [Notifications]
@@ -187,6 +201,4 @@ router.put('/notifications/:id', jwtBarrier, validate(updateSchema), notificatio
  *       404:
  *         description: Notification not found
  */
-router.delete('/notifications/:id', jwtBarrier, notificationController.deleteNotification);
 
-module.exports = router;

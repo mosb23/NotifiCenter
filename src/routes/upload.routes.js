@@ -1,6 +1,21 @@
 const express = require('express');
 const router = express.Router();
-const upload = require('../config/multer'); // path to your multer config
+const upload = require('../config/multer');
+
+
+router.post('/upload/file', upload.single('file'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ message: 'No file uploaded' });
+  }
+
+  res.json({
+    message: 'File uploaded successfully',
+    file: req.file.filename,
+  });
+});
+
+module.exports = router;
+
 
 /**
  * @swagger
@@ -22,15 +37,4 @@ const upload = require('../config/multer'); // path to your multer config
  *       200:
  *         description: File uploaded successfully
  */
-router.post('/upload/file', upload.single('file'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ message: 'No file uploaded' });
-  }
 
-  res.json({
-    message: 'File uploaded successfully',
-    file: req.file.filename,
-  });
-});
-
-module.exports = router;

@@ -1,5 +1,7 @@
 const ExcelJS = require('exceljs');
 const Notification = require('../models/notification.model');
+const CIF = require('../models/cif.model');
+const crypto = require('crypto');
 
 const extractCIFsFromExcel = async (filePath) => {
   const workbook = new ExcelJS.Workbook();
@@ -17,10 +19,14 @@ const extractCIFsFromExcel = async (filePath) => {
     });
   });
 
-  // Remove duplicate objects based on 'value'
+  // Remove duplicates
   const uniqueCIFs = Array.from(new Map(cifList.map(item => [item.value, item])).values());
 
   return uniqueCIFs;
+};
+
+const hashCIF = (value) => {
+  return crypto.createHash('sha256').update(value).digest('hex');
 };
 
 const uploadNotification = async (req, res) => {
@@ -28,7 +34,7 @@ const uploadNotification = async (req, res) => {
     const { schemaName, campaignName, title, content, tags, schedule } = req.body;
     const filePath = req.file.path;
 
-    const cifs = await extractCIFsFromExcel(filePath);
+    const extractedCIFs = await extractCIFsFromExcel(filePath);
 
     const newNotification = new Notification({
       schemaName,
@@ -36,17 +42,45 @@ const uploadNotification = async (req, res) => {
       title,
       content,
       tags: tags?.split(',') || [],
-      cifs,
       schedule: new Date(schedule),
       createdBy: req.user.id,
+      cifs: []
     });
+
+    // Save notification early to get the _id
+    await newNotification.save();
+
+    let addedCIFs = 0;
+
+    for (const cif of extractedCIFs) {
+      const hash = hashCIF(cif.value);
+
+      // Check if CIF already exists globally
+      let existingCIF = await CIF.findOne({ hash });
+
+      if (!existingCIF) {
+        existingCIF = await CIF.create({
+          value: cif.value,
+          hash
+        });
+        console.log(`✅ Created new CIF: ${cif.value}`);
+      } else {
+        console.log(`♻️ Reusing existing CIF: ${cif.value}`);
+      }
+
+      // Add CIF to this notification if not already linked
+      if (!newNotification.cifs.includes(existingCIF._id)) {
+        newNotification.cifs.push(existingCIF._id);
+        addedCIFs++;
+      }
+    }
 
     await newNotification.save();
 
     res.status(201).json({
       message: '✅ Notification created successfully',
-      count: cifs.length,
-      notification: newNotification,
+      count: addedCIFs,
+      notification: newNotification
     });
   } catch (err) {
     console.error(err);
@@ -70,35 +104,42 @@ const getAllNotifications = async (req, res) => {
       Notification.find({ createdBy: userId })
         .sort({ createdAt: -1 })
         .skip(skip)
-        .limit(limit),
+        .limit(limit)
+        .lean(),
       Notification.countDocuments({ createdBy: userId })
     ]);
+
+    const withCIFs = await Promise.all(notifications.map(async (notif) => {
+      const cifs = await CIF.find({ notification: notif._id }).lean();
+      return { ...notif, cifs };
+    }));
 
     res.json({
       total,
       page,
       limit,
       totalPages: Math.ceil(total / limit),
-      data: notifications
+      data: withCIFs
     });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
 
-
 const getNotificationById = async (req, res) => {
   try {
     const notification = await Notification.findOne({
       _id: req.params.id,
       createdBy: req.user.id
-    });
+    }).lean();
 
     if (!notification) {
       return res.status(404).json({ message: 'Notification not found' });
     }
 
-    res.json(notification);
+    const cifs = await CIF.find({ notification: notification._id }).lean();
+
+    res.json({ ...notification, cifs });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
@@ -108,7 +149,7 @@ const updateNotification = async (req, res) => {
   try {
     const updated = await Notification.findOneAndUpdate(
       { _id: req.params.id, createdBy: req.user.id },
-      req.body,
+      req.body, 
       { new: true }
     );
 
@@ -133,7 +174,9 @@ const deleteNotification = async (req, res) => {
       return res.status(404).json({ message: 'Notification not found or not yours' });
     }
 
-    res.json({ message: 'Notification deleted successfully' });
+    await CIF.deleteMany({ notification: deleted._id });
+
+    res.json({ message: 'Notification and associated CIFs deleted successfully' });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }

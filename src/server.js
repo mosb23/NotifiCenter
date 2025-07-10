@@ -4,6 +4,7 @@ const config = require('./config/config');
 const swaggerUI = require('swagger-ui-express');
 const swaggerSpec = require('./config/swagger');
 const connectDB = require('./utils/db');
+require('./utils/scheduler');
 
 dotenv.config();
 

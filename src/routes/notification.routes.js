@@ -8,6 +8,7 @@ const { notificationSchema, updateSchema } = require('../validators/notification
 
 
 
+
 router.post(
   '/notifications/upload',
   jwtBarrier,
@@ -16,10 +17,14 @@ router.post(
   notificationController.uploadNotification
 );
 
+router.get('/notifications/search', jwtBarrier, notificationController.searchNotifications);
+router.post('/notifications/send', notificationController.sendNotificationHandler);
 router.get('/notifications', jwtBarrier, notificationController.getAllNotifications);
 router.get('/notifications/:id', jwtBarrier, notificationController.getNotificationById);
 router.put('/notifications/:id', jwtBarrier, validate(updateSchema), notificationController.updateNotification);
 router.delete('/notifications/:id', jwtBarrier, notificationController.deleteNotification);
+
+
 
 module.exports = router;
 
@@ -202,3 +207,80 @@ module.exports = router;
  *         description: Notification not found
  */
 
+/**
+ * @swagger
+ * /notifications/send:
+ *   post:
+ *     summary: Send a Firebase push notification
+ *     description: Sends a push notification to the provided FCM token.
+ *     tags:
+ *       - Notifications
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *               - title
+ *               - body
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 description: Firebase client token
+ *               title:
+ *                 type: string
+ *                 description: Title of the notification
+ *               body:
+ *                 type: string
+ *                 description: Body text of the notification
+ *     responses:
+ *       200:
+ *         description: Notification sent successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 firebaseResponse:
+ *                   type: string
+ *       400:
+ *         description: Bad request - missing fields
+ *       500:
+ *         description: Server error - sending failed
+ */
+
+/**
+ * @swagger
+ * /notifications/search:
+ *   get:
+ *     summary: Search notifications by tag, schema name, campaign name, or title
+ *     tags: [Notifications]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Search query to match against schemaName, campaignName, title, or tags
+ *     responses:
+ *       200:
+ *         description: Array of matching notifications
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Notification'
+ *       400:
+ *         description: Missing or invalid query
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */

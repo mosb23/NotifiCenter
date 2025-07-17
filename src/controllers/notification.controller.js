@@ -2,6 +2,9 @@ const ExcelJS = require('exceljs');
 const Notification = require('../models/notification.model');
 const CIF = require('../models/cif.model');
 const crypto = require('crypto');
+const fs = require('fs/promises');
+const admin = require('../../public/init.firebase');
+
 
 const extractCIFsFromExcel = async (filePath) => {
   const workbook = new ExcelJS.Workbook();
@@ -29,12 +32,21 @@ const hashCIF = (value) => {
   return crypto.createHash('sha256').update(value).digest('hex');
 };
 
+
 const uploadNotification = async (req, res) => {
   try {
     const { schemaName, campaignName, title, content, tags, schedule } = req.body;
     const filePath = req.file.path;
 
     const extractedCIFs = await extractCIFsFromExcel(filePath);
+
+    // ✅ Delete the uploaded Excel file after extracting data
+    try {
+      await fs.unlink(filePath);
+      console.log(`🗑️ Deleted uploaded file: ${filePath}`);
+    } catch (unlinkErr) {
+      console.warn(`⚠️ Could not delete file ${filePath}:`, unlinkErr.message);
+    }
 
     const newNotification = new Notification({
       schemaName,
@@ -87,6 +99,7 @@ const uploadNotification = async (req, res) => {
     res.status(500).json({ message: '❌ Server error', error: err.message });
   }
 };
+
 
 const getAllNotifications = async (req, res) => {
   try {
@@ -182,10 +195,87 @@ const deleteNotification = async (req, res) => {
   }
 };
 
+const searchNotifications = async (req, res) => {
+  try {
+    const search = req.query.q?.trim();
+
+    if (!search) {
+      return res.status(400).json({ message: 'Search query is required' });
+    }
+
+    const regex = new RegExp(search, 'i'); // case-insensitive match
+
+    const notifications = await Notification.find({
+      $or: [
+        { schemaName: regex },
+        { campaignName: regex },
+        { title: regex },
+        { tags: regex }
+      ]
+    }).sort({ createdAt: -1 }).lean();
+
+    const resultsWithCIFs =
+      notifications.map(async (notif) => {
+        const cifs = await CIF.find({ notification: notif._id }).lean(); //return plain JavaScript objects
+        return { ...notif, cifs };
+      })
+    
+
+    res.status(200).json(resultsWithCIFs);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+
+const sendNotificationHandler = async (req, res) => {
+  try {
+    const { token, title, body } = req.body;
+    
+    if (!token || !title || !body) {
+      return res.status(400).json({ message: 'Missing token, title or body in request.' });
+    }
+
+
+    const response = await sendNotification(token, { title, body });
+
+    res.status(200).json({
+      message: '✅ Notification sent successfully',
+      firebaseResponse: response,
+    });
+  } catch (error) {
+    console.error('❌ Error in sendNotificationHandler:', error.message);
+    res.status(500).json({ message: 'Failed to send notification', error: error.message });
+  }
+};
+
+
+async function sendNotification(token, { title, body }, data = {}) {
+  const message = {
+    token,
+    notification: {
+      title,
+      body,
+    },
+  };
+  console.log('message==>',message)
+
+  try {
+    const response = await admin.messaging().send(message);
+    console.log('✅ Notification sent:', response);
+    return response;
+  } catch (error) {
+    console.error('❌ Error sending notification:', error.message);
+    throw error;
+  }
+}
+
 module.exports = {
   uploadNotification,
   getAllNotifications,
   getNotificationById,
   updateNotification,
+  sendNotificationHandler,
+  searchNotifications,
   deleteNotification
 };

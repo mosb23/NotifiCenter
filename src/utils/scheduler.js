@@ -1,6 +1,6 @@
 const cron = require('node-cron');
 const Notification = require('../models/notification.model');
-const { printNotificationDetails } = require('./filebase');
+const { printNotificationDetails } = require('../firebase/filebase');
 
 
 

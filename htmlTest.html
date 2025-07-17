@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>FCM Token Tester</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        button { padding: 10px 15px; background: #4285f4; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #3367d6; }
+        button:disabled { background: #cccccc; }
+        pre { background: #f5f5f5; padding: 15px; border-radius: 4px; overflow-x: auto; }
+        .status { margin: 10px 0; padding: 10px; border-radius: 4px; }
+        .success { background: #e6f4ea; color: #0d652d; }
+        .error { background: #fce8e6; color: #c5221f; }
+    </style>
+</head>
+<body>
+    <h2>FCM Token Test</h2>
+    
+    <button id="tokenButton" onclick="requestPermission()">Get Token</button>
+    <button id="deleteButton" onclick="deleteToken()" disabled>Delete Token</button>
+    
+    <div id="status" class="status" style="display: none;"></div>
+    
+    <h3>Your FCM Token:</h3>
+    <pre id="tokenOutput">No token generated yet</pre>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
+    
+    <script>
+        const firebaseConfig = {
+        apiKey: "AIzaSyAmyY2H9l7_4-vRJ1dNVl91CgZVVPfEMTY",
+        authDomain: "notificenter-72e30.firebaseapp.com",
+        projectId: "notificenter-72e30",
+        storageBucket: "notificenter-72e30.firebasestorage.app",
+        messagingSenderId: "260126271800",
+        appId: "1:260126271800:web:665d34d58904ae343879cd"
+        };
+        
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const messaging = firebase.messaging();
+        
+        // UI Elements
+        const tokenButton = document.getElementById('tokenButton');
+        const deleteButton = document.getElementById('deleteButton');
+        const tokenOutput = document.getElementById('tokenOutput');
+        const statusDiv = document.getElementById('status');
+        
+        // Check if token already exists in localStorage
+        const existingToken = localStorage.getItem('fcm_token');
+        if (existingToken) {
+            tokenOutput.textContent = existingToken;
+            deleteButton.disabled = false;
+        }
+        
+        async function requestPermission() {
+            try {
+                tokenButton.disabled = true;
+                showStatus('Requesting notification permission...');
+                
+                const permission = await Notification.requestPermission();
+                if (permission !== 'granted') {
+                    showStatus('Notification permission not granted.', 'error');
+                    tokenButton.disabled = false;
+                    return;
+                }
+                
+                showStatus('Getting FCM token...');
+                
+                // Register service worker for background notifications
+                try {
+                    const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                } catch (err) {
+                    console.warn('ServiceWorker registration failed: ', err);
+                    // This is not fatal for token generation
+                }
+                
+                const token = await messaging.getToken({
+                    vapidKey:"BDHuvSec93uKR1rjmsC29Tus0FYj2Rb74EQT7i_NEvPwCCYyfb4EFeZ-TgoTOxr-XAtwptAqLVxIK_RUoEeIE6c"
+                });
+                
+                if (!token) {
+                    showStatus('No token received', 'error');
+                    tokenButton.disabled = false;
+                    return;
+                }
+                
+                tokenOutput.textContent = token;
+                localStorage.setItem('fcm_token', token);
+                deleteButton.disabled = false;
+                showStatus('Token generated successfully!', 'success');
+                console.log("FCM Token:", token);
+                
+                // You might want to send this token to your server here
+                // await sendTokenToServer(token);
+                
+            } catch (err) {
+                console.error('Error getting token:', err);
+                showStatus(`Error: ${err.message}`, 'error');
+            } finally {
+                tokenButton.disabled = false;
+            }
+        }
+        
+        async function deleteToken() {
+            try {
+                deleteButton.disabled = true;
+                const token = localStorage.getItem('fcm_token');
+                
+                if (!token) {
+                    showStatus('No token to delete', 'error');
+                    return;
+                }
+                
+                await messaging.deleteToken();
+                localStorage.removeItem('fcm_token');
+                tokenOutput.textContent = 'No token generated yet';
+                showStatus('Token deleted successfully', 'success');
+                
+            } catch (err) {
+                console.error('Error deleting token:', err);
+                showStatus(`Error deleting token: ${err.message}`, 'error');
+            } finally {
+                deleteButton.disabled = false;
+            }
+        }
+        
+        function showStatus(message, type = 'info') {
+            statusDiv.style.display = 'block';
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+        
+        // Handle foreground messages
+        messaging.onMessage((payload) => {
+            console.log('Foreground message received:', payload);
+            showStatus(`Notification received: ${payload.notification?.title || 'No title'} - ${payload.notification?.body || 'No body'}`);
+            
+            // You can customize the notification display here
+            if (payload.notification) {
+                const { title, body } = payload.notification;
+                alert(`${title}\n${body}`);
+            }
+        });
+        
+        // Optional: Check if service worker is supported
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.addEventListener('message', (event) => {
+                console.log('Message from service worker:', event.data);
+            });
+        }
+    </script>
+</body>
+</html>

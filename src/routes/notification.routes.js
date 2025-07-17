@@ -20,8 +20,8 @@ router.post(
 router.get('/notifications/search', jwtBarrier, notificationController.searchNotifications);
 router.get('/notifications', jwtBarrier, notificationController.getAllNotifications);
 router.get('/notifications/:id', jwtBarrier, notificationController.getNotificationById);
-router.put('/notifications/:id', jwtBarrier, validate(updateSchema), notificationController.updateNotification);
 router.delete('/notifications/:id', jwtBarrier, notificationController.deleteNotification);
+router.put('/notifications/:id', jwtBarrier, validate(updateSchema), notificationController.updateNotification);
 
 
 

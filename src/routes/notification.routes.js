@@ -18,11 +18,10 @@ router.post(
 );
 
 router.get('/notifications/search', jwtBarrier, notificationController.searchNotifications);
-router.post('/notifications/send', notificationController.sendNotificationHandler);
 router.get('/notifications', jwtBarrier, notificationController.getAllNotifications);
 router.get('/notifications/:id', jwtBarrier, notificationController.getNotificationById);
-router.put('/notifications/:id', jwtBarrier, validate(updateSchema), notificationController.updateNotification);
 router.delete('/notifications/:id', jwtBarrier, notificationController.deleteNotification);
+router.put('/notifications/:id', jwtBarrier, validate(updateSchema), notificationController.updateNotification);
 
 
 
@@ -47,8 +46,6 @@ module.exports = router;
  *             type: object
  *             required:
  *               - file
- *               - schemaName
- *               - campaignName
  *               - title
  *               - content
  *               - schedule
@@ -57,11 +54,8 @@ module.exports = router;
  *                 type: string
  *                 format: binary
  *                 description: Excel file containing 8-digit CIFs
- *               schemaName:
- *                 type: string
+ 
  *                 example: PromotionList2025
- *               campaignName:
- *                 type: string
  *                 example: Summer Promo
  *               title:
  *                 type: string
@@ -267,7 +261,7 @@ module.exports = router;
  *         required: true
  *         schema:
  *           type: string
- *         description: Search query to match against schemaName, campaignName, title, or tags
+ *         description: Search query to match against  title, or tags
  *     responses:
  *       200:
  *         description: Array of matching notifications

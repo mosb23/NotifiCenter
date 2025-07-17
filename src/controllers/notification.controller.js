@@ -3,7 +3,6 @@ const Notification = require('../models/notification.model');
 const CIF = require('../models/cif.model');
 const crypto = require('crypto');
 const fs = require('fs/promises');
-const admin = require('../../public/init.firebase');
 
 
 const extractCIFsFromExcel = async (filePath) => {
@@ -35,7 +34,7 @@ const hashCIF = (value) => {
 
 const uploadNotification = async (req, res) => {
   try {
-    const { schemaName, campaignName, title, content, tags, schedule } = req.body;
+    const { title, content, tags, schedule } = req.body;
     const filePath = req.file.path;
 
     const extractedCIFs = await extractCIFsFromExcel(filePath);
@@ -48,9 +47,7 @@ const uploadNotification = async (req, res) => {
       console.warn(`⚠️ Could not delete file ${filePath}:`, unlinkErr.message);
     }
 
-    const newNotification = new Notification({
-      schemaName,
-      campaignName,
+    const newNotification = new Notification({      
       title,
       content,
       tags: tags?.split(',') || [],
@@ -206,9 +203,7 @@ const searchNotifications = async (req, res) => {
     const regex = new RegExp(search, 'i'); // case-insensitive match
 
     const notifications = await Notification.find({
-      $or: [
-        { schemaName: regex },
-        { campaignName: regex },
+      $or: [      
         { title: regex },
         { tags: regex }
       ]
@@ -250,32 +245,13 @@ const sendNotificationHandler = async (req, res) => {
 };
 
 
-async function sendNotification(token, { title, body }, data = {}) {
-  const message = {
-    token,
-    notification: {
-      title,
-      body,
-    },
-  };
-  console.log('message==>',message)
 
-  try {
-    const response = await admin.messaging().send(message);
-    console.log('✅ Notification sent:', response);
-    return response;
-  } catch (error) {
-    console.error('❌ Error sending notification:', error.message);
-    throw error;
-  }
-}
 
 module.exports = {
   uploadNotification,
   getAllNotifications,
   getNotificationById,
   updateNotification,
-  sendNotificationHandler,
   searchNotifications,
   deleteNotification
 };

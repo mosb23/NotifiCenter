@@ -1,8 +1,6 @@
 const mongoose = require('mongoose');
 
 const notificationSchema = new mongoose.Schema({
-  schemaName: { type: String, required: true },
-  campaignName: { type: String, required: true },
   title: { type: String, required: true },
   content: { type: String, required: true },
   tags: { type: [String] },

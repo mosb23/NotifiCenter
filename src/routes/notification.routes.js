@@ -47,8 +47,6 @@ module.exports = router;
  *             type: object
  *             required:
  *               - file
- *               - schemaName
- *               - campaignName
  *               - title
  *               - content
  *               - schedule
@@ -57,11 +55,8 @@ module.exports = router;
  *                 type: string
  *                 format: binary
  *                 description: Excel file containing 8-digit CIFs
- *               schemaName:
- *                 type: string
+ 
  *                 example: PromotionList2025
- *               campaignName:
- *                 type: string
  *                 example: Summer Promo
  *               title:
  *                 type: string
@@ -267,7 +262,7 @@ module.exports = router;
  *         required: true
  *         schema:
  *           type: string
- *         description: Search query to match against schemaName, campaignName, title, or tags
+ *         description: Search query to match against  title, or tags
  *     responses:
  *       200:
  *         description: Array of matching notifications

@@ -35,7 +35,7 @@ const hashCIF = (value) => {
 
 const uploadNotification = async (req, res) => {
   try {
-    const { schemaName, campaignName, title, content, tags, schedule } = req.body;
+    const { title, content, tags, schedule } = req.body;
     const filePath = req.file.path;
 
     const extractedCIFs = await extractCIFsFromExcel(filePath);
@@ -48,9 +48,7 @@ const uploadNotification = async (req, res) => {
       console.warn(`⚠️ Could not delete file ${filePath}:`, unlinkErr.message);
     }
 
-    const newNotification = new Notification({
-      schemaName,
-      campaignName,
+    const newNotification = new Notification({      
       title,
       content,
       tags: tags?.split(',') || [],
@@ -206,9 +204,7 @@ const searchNotifications = async (req, res) => {
     const regex = new RegExp(search, 'i'); // case-insensitive match
 
     const notifications = await Notification.find({
-      $or: [
-        { schemaName: regex },
-        { campaignName: regex },
+      $or: [      
         { title: regex },
         { tags: regex }
       ]

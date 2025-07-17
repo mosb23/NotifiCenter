@@ -1,8 +1,6 @@
 const Joi = require('joi');
 
 exports.notificationSchema = Joi.object({
-  schemaName: Joi.string().required(),
-  campaignName: Joi.string().required(),
   title: Joi.string().required(),
   content: Joi.string().required(),
   tags: Joi.string().optional(), 
@@ -11,8 +9,6 @@ exports.notificationSchema = Joi.object({
 });
 
 exports.updateSchema = Joi.object({
-  schemaName: Joi.string().optional(),
-  campaignName: Joi.string().optional(),
   title: Joi.string().optional(),
   content: Joi.string().optional(),
   tags: Joi.string().optional(),

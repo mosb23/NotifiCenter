@@ -13,3 +13,6 @@ npm-debug.log*
 
 # system files
 .DS_Store
+
+src/config/firebaseKey.json
+

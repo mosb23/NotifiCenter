@@ -3,7 +3,7 @@ const Notification = require('../models/notification.model');
 const CIF = require('../models/cif.model');
 const crypto = require('crypto');
 const fs = require('fs/promises');
-const admin = require('../../public/init.firebase');
+// const admin = require('../../public/init.firebase');
 
 
 const extractCIFsFromExcel = async (filePath) => {
@@ -256,14 +256,14 @@ async function sendNotification(token, { title, body }, data = {}) {
   };
   console.log('message==>',message)
 
-  try {
-    const response = await admin.messaging().send(message);
-    console.log('✅ Notification sent:', response);
-    return response;
-  } catch (error) {
-    console.error('❌ Error sending notification:', error.message);
-    throw error;
-  }
+  // try {
+  //   const response = await admin.messaging().send(message);
+  //   console.log('✅ Notification sent:', response);
+  //   return response;
+  // } catch (error) {
+  //   console.error('❌ Error sending notification:', error.message);
+  //   throw error;
+  // }
 }
 
 module.exports = {

@@ -10,7 +10,8 @@ const extractCIFsFromExcel = async (filePath) => {
   await workbook.xlsx.readFile(filePath);
 
   const sheet = workbook.worksheets[0];
-  const cifList = [];
+  const cifList = []; // you can make this a Set if you want to avoid duplicates 
+  
 
   sheet.eachRow((row) => {
     row.eachCell((cell) => {
@@ -21,7 +22,8 @@ const extractCIFsFromExcel = async (filePath) => {
     });
   });
 
-  // Remove duplicates
+  // Remove duplicates 
+  //no need for this if you are using a Set
   const uniqueCIFs = Array.from(new Map(cifList.map(item => [item.value, item])).values());
 
   return uniqueCIFs;
@@ -105,7 +107,7 @@ const getAllNotifications = async (req, res) => {
     if (!userId) {
       return res.status(401).json({ message: 'Unauthorized: No user ID' });
     }
-
+//make the pagination generic with helper functions
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
@@ -140,7 +142,7 @@ const getNotificationById = async (req, res) => {
   try {
     const notification = await Notification.findOne({
       _id: req.params.id,
-      createdBy: req.user.id
+      createdBy: req.user.id // no need to check if user you can return any notification regardless of user
     }).lean();
 
     if (!notification) {
@@ -157,6 +159,7 @@ const getNotificationById = async (req, res) => {
 
 const updateNotification = async (req, res) => {
   try {
+    //need to update the file and cifs if they are provided too (check if file exists in req and extract the cifs and update the cifs group )
     const updated = await Notification.findOneAndUpdate(
       { _id: req.params.id, createdBy: req.user.id },
       req.body, 
@@ -222,7 +225,7 @@ const searchNotifications = async (req, res) => {
   }
 };
 
-
+// you can comments this out till you add sendNotification firebase config again 
 const sendNotificationHandler = async (req, res) => {
   try {
     const { token, title, body } = req.body;

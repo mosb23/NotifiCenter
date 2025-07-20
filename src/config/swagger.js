@@ -28,8 +28,10 @@ const options = {
         bearerAuth: [],
       },
     ],
+    
   },
-  apis: ['./src/routes/*.js'], 
+  apis: ['./src/routes/*.js',
+    path.join(__dirname, 'docs/**/*.docs.js')], 
 };
 
 const swaggerSpec = swaggerJSDoc(options);

@@ -3,7 +3,8 @@ const User = require('../models/user.model');
 const bcrypt = require('bcryptjs');
 const config = require('../config/config');
 const { registerSchema } = require('../validators/user.validator');
-
+const ApiResponse = require('../core/apiResponse');
+const ApiError = require('../core/apiError');
 
 exports.register = async (req, res) => {
   const { username, password } = req.body;
@@ -11,13 +12,13 @@ exports.register = async (req, res) => {
     // ✅ Validate input
     const { error } = registerSchema.validate({ username, password });
     if (error) {
-      return res.status(400).json({ message: error.details[0].message });
+      throw ApiError.badRequest(error.details[0].message);
     }
 
     const exists = await User.findOne({ username });
     if (exists) {
-      return res.status(400).json({ message: 'User already exists' });
-    }
+   throw ApiError.conflict('User already exists')
+      }
 
     // ✅ Hash password manually
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -25,9 +26,11 @@ exports.register = async (req, res) => {
     const newUser = new User({ username, password: hashedPassword });
     await newUser.save();
 
-    res.status(201).json({ message: 'User registered successfully' });
-  } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err.message });
+    return res.status(201).json(
+      ApiResponse.created(null, 'User registered successfully')
+    ); 
+   } catch (err) {
+    next(err); // Pass to error handler
   }
 };
 
@@ -36,7 +39,7 @@ exports.login = async (req, res) => {
   try {
     const user = await User.findOne({ username });
     if (!user) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      throw ApiError.unauthorized();
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
@@ -50,12 +53,13 @@ exports.login = async (req, res) => {
       { expiresIn:config.jwtExpiresIn }
     );
 
-    res.json({ token });
+    res.json(ApiResponse.success({ token }, 'Login successful'));
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
 
 exports.profile = (req, res) => {
-  res.json({ message: 'Welcome to your profile', user: req.user });
-};
+  res.json(ApiResponse.success(
+    { user: req.user }
+  ))};

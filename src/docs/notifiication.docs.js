@@ -24,7 +24,6 @@
  *                 description: Excel file containing 8-digit CIFs
  
  *                 example: PromotionList2025
- *                 example: Summer Promo
  *               title:
  *                 type: string
  *                 example: Big Summer Discounts!

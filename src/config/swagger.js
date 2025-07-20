@@ -32,7 +32,7 @@ const options = {
     ],
   },
   apis:[
-    path.join(__dirname, '../routes/*.js'),       // Route-level annotations
+    // path.join(__dirname, '../routes/*.js'),       // Route-level annotations
     path.join(__dirname, '../docs/*.docs.js'),
   ], 
 

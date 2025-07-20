@@ -4,7 +4,7 @@ exports.notificationSchema = Joi.object({
   title: Joi.string().required(),
   content: Joi.string().required(),
   tags: Joi.string().optional(), 
-  schedule: Joi.date().iso().required(),
+  schedule: Joi.date().iso().optional(),
   status: Joi.string().valid('draft', 'scheduled', 'sent').optional()
 });
 

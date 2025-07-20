@@ -5,7 +5,7 @@ const notificationSchema = new mongoose.Schema({
   content: { type: String, required: true },
   tags: { type: [String] },
   cifs: [{ type: mongoose.Schema.Types.ObjectId, ref: 'CIF' }], // ✅ add this
-  schedule: { type: Date, required: true },
+  schedule: { type: Date },
   status: {
     type: String,
     enum: ['draft', 'scheduled', 'sent'],

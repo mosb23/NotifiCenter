@@ -8,7 +8,7 @@ const fileRoutes = require('./upload.routes');
 
 
 router.use('/auth', authRoutes);
-router.use('/notification', notificationRoutes);
+router.use('/notifications', notificationRoutes);
 router.use('/upload', fileRoutes);
 
 

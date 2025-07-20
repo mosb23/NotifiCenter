@@ -23,7 +23,6 @@ const extractCIFsFromExcel = async (filePath) => {
   });
 
   // Remove duplicates 
-  //no need for this if you are using a Set
   const uniqueCIFs = Array.from(new Map(cifList.map(item => [item.value, item])).values());
 
   return uniqueCIFs;
@@ -36,6 +35,8 @@ const hashCIF = (value) => {
 
 const uploadNotification = async (req, res) => {
   try {
+    console.log('req.body',req.body)
+    console.log('req.file',req.file.path)
     const { title, content, tags, schedule } = req.body;
     const filePath = req.file.path;
 

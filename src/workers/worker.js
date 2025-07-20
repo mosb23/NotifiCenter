@@ -1,7 +1,7 @@
 const { parentPort } = require('worker_threads');
 const mongoose = require('mongoose');
-const User = require('../models/user.model'); // ✅ FIXED PATH
-const { mongoURI } = require('../config/config'); // ✅ FIXED PATH
+const User = require('../models/user.model'); 
+const { mongoURI } = require('../config/config'); 
 
 async function connectDB() {
   if (mongoose.connection.readyState === 0) {

@@ -8,33 +8,25 @@ const connectDB = require('./utils/db');
 require('./utils/scheduler');
 dotenv.config();
 
-
-
 const apiRoutes = require('./routes/index.routes');
+const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
-const errorHandler = require('./middleware/errorHandler');
+
+// ✅ Move CORS before any other middleware or routes
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true,
+}));
 
 // Middleware
 app.use(express.json());
 
-
-
 app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerSpec));
-
-
 app.use('/api', apiRoutes);
-
-
 app.use(errorHandler);
 
-app.use(cors({
-  origin: 'http://localhost:5173', 
-  credentials: true,              
-}));
-
-
-// Database connection and server start
+// Start server
 const startServer = async () => {
   try {
     await connectDB();

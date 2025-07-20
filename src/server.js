@@ -6,6 +6,7 @@ const swaggerSpec = require('./config/swagger');
 const connectDB = require('./utils/db');
 require('./utils/scheduler');
 dotenv.config();
+const cors = require('cors');
 
 
 
@@ -26,6 +27,11 @@ app.use('/api', apiRoutes);
 
 
 app.use(errorHandler);
+
+app.use(cors({
+  origin: 'http://localhost:5173', 
+  credentials: true,              
+}));
 
 
 // Database connection and server start

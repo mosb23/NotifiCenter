@@ -12,7 +12,7 @@ const options = {
     },
     servers: [
       {
-        url: 'http://localhost:3000/api',
+        url: 'http://https://notificenter-production.up.railway.app/',
         description: 'Development server',
       },
     ],

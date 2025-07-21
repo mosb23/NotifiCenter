@@ -10,16 +10,16 @@ services:
       - /app/node_modules
     env_file:
       - .env
-    environment:
-    depends_on:
-      - mongo
+    # environment:
+    # depends_on:
+    #   - mongo
 
-  mongo:
-    image: mongo:6
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo-data:/data/db
+  # mongo:
+  #   image: mongo:6
+  #   ports:
+  #     - "27017:27017"
+  #   volumes:
+  #     - mongo-data:/data/db
 
-volumes:
-  mongo-data:
+# volumes:
+#   mongo-data:

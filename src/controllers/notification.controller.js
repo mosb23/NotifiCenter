@@ -22,19 +22,10 @@ const extractCIFsFromExcel = async (filePath) => {
         if (/^\d{8}$/.test(value)) {
           cifList.push({ value });
         } else {
-          invalidValues.push({ row: rowNumber, col: colNumber, value });
+          throw new Error(`❌ Invalid CIF values found: ${errorDetails}`);
         }
       });
     });
-
-    if (invalidValues.length > 0) {
-      const errorDetails = invalidValues.map(v => `Row ${v.row}, Col ${v.col}: "${v.value}"`).join('; ');
-      throw new Error(`❌ Invalid CIF values found: ${errorDetails}`);
-    }
-
-    if (cifList.length === 0) {
-      throw new Error('❌ No valid CIFs found.');
-    }
 
     const uniqueCIFs = Array.from(new Map(cifList.map(item => [item.value, item])).values());
 
@@ -65,7 +56,7 @@ const uploadNotification = async (req, res) => {
       console.warn(`⚠️ Could not delete file ${filePath}:`, unlinkErr.message);
     }
 
-    // ✅ If no valid CIFs, don't create notification
+ 
     if (!extractedCIFs || extractedCIFs.length === 0) {
       return res.status(400).json({ message: '❌ No valid CIFs found. Notification not created.' });
     }

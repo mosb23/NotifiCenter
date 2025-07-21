@@ -12,29 +12,38 @@ const extractCIFsFromExcel = async (filePath) => {
 
     const sheet = workbook.worksheets[0];
     const cifList = [];
+    const invalidValues = [];
 
-    sheet.eachRow((row) => {
-      row.eachCell((cell) => {
+    sheet.eachRow((row, rowNumber) => {
+      row.eachCell((cell, colNumber) => {
         const value = cell.value?.toString().trim();
+        if (!value) return;
+
         if (/^\d{8}$/.test(value)) {
           cifList.push({ value });
+        } else {
+          invalidValues.push({ row: rowNumber, col: colNumber, value });
         }
       });
     });
 
-    // Remove duplicates
-    const uniqueCIFs = Array.from(new Map(cifList.map(item => [item.value, item])).values());
-
-    // Check if list is empty
-    if (uniqueCIFs.length === 0) {
-      throw new Error('Invalid CIFs: No valid 8-digit CIFs found in the file.');
+    if (invalidValues.length > 0) {
+      const errorDetails = invalidValues.map(v => `Row ${v.row}, Col ${v.col}: "${v.value}"`).join('; ');
+      throw new Error(`❌ Invalid CIF values found: ${errorDetails}`);
     }
+
+    if (cifList.length === 0) {
+      throw new Error('❌ No valid CIFs found.');
+    }
+
+    const uniqueCIFs = Array.from(new Map(cifList.map(item => [item.value, item])).values());
 
     return uniqueCIFs;
   } catch (err) {
     throw new Error(`Failed to extract CIFs: ${err.message}`);
   }
 };
+
 
 const hashCIF = (value) => {
   return crypto.createHash('sha256').update(value).digest('hex');

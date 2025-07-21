@@ -1,6 +1,16 @@
 const cron = require('node-cron');
 const Notification = require('../models/notification.model');
 
+function printNotificationDetails(notification) {
+  console.log(`📄 Title: ${notification.title}`);
+  console.log(`📝 Content: ${notification.content}`);
+  console.log(`🏷️ Tags: ${notification.tags}`);
+  console.log(`📅 Scheduled At: ${notification.schedule}`);
+  console.log(`📦 Status: ${notification.status}`);
+  console.log('---');
+}
+
+
 
 
 cron.schedule('* * * * *', async () => {

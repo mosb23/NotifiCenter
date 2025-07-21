@@ -6,26 +6,34 @@ const fs = require('fs/promises');
 
 
 const extractCIFsFromExcel = async (filePath) => {
-  const workbook = new ExcelJS.Workbook();
-  await workbook.xlsx.readFile(filePath);
+  try {
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.readFile(filePath);
 
-  const sheet = workbook.worksheets[0];
-  const cifList = []; // you can make this a Set if you want to avoid duplicates 
-  
+    const sheet = workbook.worksheets[0];
+    const cifList = [];
 
-  sheet.eachRow((row) => {
-    row.eachCell((cell) => {
-      const value = cell.value?.toString().trim();
-      if (/^\d{8}$/.test(value)) {
-        cifList.push({ value });
-      }
+    sheet.eachRow((row) => {
+      row.eachCell((cell) => {
+        const value = cell.value?.toString().trim();
+        if (/^\d{8}$/.test(value)) {
+          cifList.push({ value });
+        }
+      });
     });
-  });
 
-  // Remove duplicates 
-  const uniqueCIFs = Array.from(new Map(cifList.map(item => [item.value, item])).values());
+    // Remove duplicates
+    const uniqueCIFs = Array.from(new Map(cifList.map(item => [item.value, item])).values());
 
-  return uniqueCIFs;
+    // Check if list is empty
+    if (uniqueCIFs.length === 0) {
+      throw new Error('Invalid CIFs: No valid 8-digit CIFs found in the file.');
+    }
+
+    return uniqueCIFs;
+  } catch (err) {
+    throw new Error(`Failed to extract CIFs: ${err.message}`);
+  }
 };
 
 const hashCIF = (value) => {
@@ -35,8 +43,6 @@ const hashCIF = (value) => {
 
 const uploadNotification = async (req, res) => {
   try {
-    console.log('req.body',req.body)
-    console.log('req.file',req.file.path)
     const { title, content, tags, schedule } = req.body;
     const filePath = req.file.path;
 
@@ -50,42 +56,38 @@ const uploadNotification = async (req, res) => {
       console.warn(`⚠️ Could not delete file ${filePath}:`, unlinkErr.message);
     }
 
-    const newNotification = new Notification({      
-      title,
-      content,
-      tags: tags?.split(',') || [],
-      schedule: new Date(schedule),
-      createdBy: req.user.id,
-      cifs: []
-    });
-
-    // Save notification early to get the _id
-    await newNotification.save();
+    // ✅ If no valid CIFs, don't create notification
+    if (!extractedCIFs || extractedCIFs.length === 0) {
+      return res.status(400).json({ message: '❌ No valid CIFs found. Notification not created.' });
+    }
 
     let addedCIFs = 0;
+    const cifIds = [];
 
     for (const cif of extractedCIFs) {
       const hash = hashCIF(cif.value);
-
-      // Check if CIF already exists globally
       let existingCIF = await CIF.findOne({ hash });
 
       if (!existingCIF) {
-        existingCIF = await CIF.create({
-          value: cif.value,
-          hash
-        });
+        existingCIF = await CIF.create({ value: cif.value, hash });
         console.log(`✅ Created new CIF: ${cif.value}`);
       } else {
         console.log(`♻️ Reusing existing CIF: ${cif.value}`);
       }
 
-      // Add CIF to this notification if not already linked
-      if (!newNotification.cifs.includes(existingCIF._id)) {
-        newNotification.cifs.push(existingCIF._id);
-        addedCIFs++;
-      }
+      cifIds.push(existingCIF._id);
+      addedCIFs++;
     }
+
+    // ✅ Create and save notification only after valid CIFs are ready
+    const newNotification = new Notification({
+      title,
+      content,
+      tags: tags?.split(',') || [],
+      schedule: new Date(schedule),
+      createdBy: req.user.id,
+      cifs: cifIds
+    });
 
     await newNotification.save();
 
@@ -94,11 +96,13 @@ const uploadNotification = async (req, res) => {
       count: addedCIFs,
       notification: newNotification
     });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: '❌ Server error', error: err.message });
   }
 };
+
 
 
 const getAllNotifications = async (req, res) => {
@@ -220,7 +224,6 @@ const deleteNotification = async (req, res) => {
       })
     );
       
-
       res.status(200).json(resultsWithCIFs);
     } catch (err) {
       res.status(500).json({ message: 'Server error', error: err.message });

@@ -30,7 +30,7 @@ const startServer = async () => {
   try {
     await connectDB();
     app.listen(config.port, () => {
-      console.log(`🚀 Server running at http://localhost:${config.port}`);
+      console.log(`🚀 Server running at https://notificenter-production.up.railway.app/${config.port}`);
     });
   } catch (err) {
     console.error('❌ Failed to connect to MongoDB:', err.message);

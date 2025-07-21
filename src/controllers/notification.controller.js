@@ -196,35 +196,36 @@ const deleteNotification = async (req, res) => {
   }
 };
 
-const searchNotifications = async (req, res) => {
-  try {
-    const search = req.query.q?.trim();
+  const searchNotifications = async (req, res) => {
+    try {
+      const search = req.query.q?.trim();
 
-    if (!search) {
-      return res.status(400).json({ message: 'Search query is required' });
-    }
+      if (!search) {
+        return res.status(400).json({ message: 'Search query is required' });
+      }
 
-    const regex = new RegExp(search, 'i'); // case-insensitive match
+      const regex = new RegExp(search, 'i'); // case-insensitive match
 
-    const notifications = await Notification.find({
-      $or: [      
-        { title: regex },
-        { tags: regex }
-      ]
-    }).sort({ createdAt: -1 }).lean();
+      const notifications = await Notification.find({
+        $or: [      
+          { title: regex },
+          { tags: regex }
+        ]
+      }).sort({ createdAt: -1 }).lean();
 
-    const resultsWithCIFs =
+    const resultsWithCIFs = await Promise.all(
       notifications.map(async (notif) => {
-        const cifs = await CIF.find({ notification: notif._id }).lean(); //return plain JavaScript objects
+        const cifs = await CIF.find({ notification: notif._id }).lean();
         return { ...notif, cifs };
       })
-    
+    );
+      
 
-    res.status(200).json(resultsWithCIFs);
-  } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err.message });
-  }
-};
+      res.status(200).json(resultsWithCIFs);
+    } catch (err) {
+      res.status(500).json({ message: 'Server error', error: err.message });
+    }
+  };
 
 // const sendNotificationHandler = async (req, res) => {
 //   try {
